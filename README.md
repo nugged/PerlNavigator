@@ -94,6 +94,8 @@ Sublime Text requires the following minimum settings under LSP settings (modify 
             "selector": "source.perl",
         },
         "settings": {
+            // "perlnavigator.logging": true,
+            // "perlnavigator.maxLogLevel": 1, // 0=error, 1=warn, 2=info, 3=debug
             // "perlnavigator.perltidyProfile": "~/.perltidyrc",
             // "perlnavigator.perlcriticProfile": "~/.perlcriticrc",
             // "perlnavigator.perlcriticMessageFormat": "%m - %e",

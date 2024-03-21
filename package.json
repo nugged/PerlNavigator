@@ -215,6 +215,12 @@
 					"default": true,
 					"description": "Log to stdout from the navigator. Viewable in the Perl Navigator LSP log"
 				},
+				"perlnavigator.maxLogLevel": {
+					"scope": "resource",
+					"type": "number",
+					"default": 1,
+					"description": "Maximum log level to display in the Perl Navigator LSP log"
+				},
 				"perlnavigator.trace.server": {
 					"scope": "window",
 					"type": "string",

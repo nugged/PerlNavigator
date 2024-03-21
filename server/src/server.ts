@@ -136,6 +136,7 @@ const defaultSettings: NavigatorSettings = {
     includePaths: [],
     includeLib: true,
     logging: true,
+    maxLogLevel: undefined,
     enableProgress: false,
 };
 
@@ -221,7 +222,7 @@ function expandTildePaths(paths: string, settings: NavigatorSettings): string {
     // so, Windows "%USERPROFILE%" currently is ignored (and rarely used).
     if (path.startsWith("~/")) {
         const newPath = homedir() + path.slice(1);
-        nLog("Expanding tilde path '" + path + "' to '" + newPath + "'", settings);
+        nLog("Expanding tilde path '" + path + "' to '" + newPath + "'", settings, 3);
         return newPath;
     } else {
         return path;

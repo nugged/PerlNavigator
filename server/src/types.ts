@@ -31,6 +31,7 @@ export interface NavigatorSettings {
     includePaths: string[];
     includeLib: boolean;
     logging: boolean;
+    maxLogLevel: undefined | number;
     enableProgress: boolean;
 }
 

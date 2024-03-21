@@ -245,9 +245,9 @@ export function lookupSymbol(perlDoc: PerlDocument, modMap: Map<string, string>,
     return [];
 }
 
-export function nLog(message: string, settings: NavigatorSettings) {
+export function nLog(message: string, settings: NavigatorSettings, level: number = 2) {
     // TODO: Remove resource level settings and just use a global logging setting?
-    if (settings.logging) {
+    if (settings.logging && ( settings.maxLogLevel === undefined || level <= settings.maxLogLevel)) {
         console.error(message);
     }
 }

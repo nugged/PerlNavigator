@@ -1,5 +1,5 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver/node";
-import { ParseType, NavigatorSettings, CompilationResults, PerlDocument } from "./types";
+import { ParseType, NavigatorSettings, CompilationResults, PerlDocument, LogLevel } from "./types";
 import { WorkspaceFolder } from "vscode-languageserver-protocol";
 import { dirname, join } from "path";
 import Uri from "vscode-uri";
@@ -27,7 +27,7 @@ export async function perlcompile(textDocument: TextDocument, workspaceFolders: 
     if (settings.enableWarnings) perlParams = perlParams.concat(["-Mwarnings", "-M-warnings=redefine"]); // Force enable some warnings.
     perlParams = perlParams.concat(getIncPaths(workspaceFolders, settings));
     perlParams = perlParams.concat(await getInquisitor());
-    nLog("Starting perl compilation check with the equivalent of: " + settings.perlPath + " " + perlParams.join(" ") + " " + filePath, settings);
+    nLog("Starting perl compilation check with the equivalent of: " + settings.perlPath + " " + perlParams.join(" ") + " " + filePath, settings, LogLevel.Debug);
 
 
     let output: string;
@@ -50,8 +50,8 @@ export async function perlcompile(textDocument: TextDocument, workspaceFolders: 
         }
         const perlProcess = async_execFile(settings.perlPath, perlParams, options);
         perlProcess?.child?.stdin?.on("error", (error: any) => {
-            nLog("Perl Compilation Error Caught: ", settings);
-            nLog(error, settings);
+            nLog("Perl Compilation Error Caught: ", settings, LogLevel.Error);
+            nLog(error, settings, LogLevel.Error);
         });
         perlProcess?.child?.stdin?.write(code);
         perlProcess?.child?.stdin?.end();
@@ -67,8 +67,8 @@ export async function perlcompile(textDocument: TextDocument, workspaceFolders: 
             stdout = error.stdout.toString();
             severity = DiagnosticSeverity.Error;
         } else {
-            nLog("Perlcompile failed with unknown error", settings);
-            nLog(error, settings);
+            nLog("Perlcompile failed with unknown error", settings, LogLevel.Error);
+            nLog(error, settings, LogLevel.Error);
             return;
         }
     }
@@ -187,7 +187,7 @@ export async function perlcritic(textDocument: TextDocument, workspaceFolders: W
     if (settings.perlcriticExclude) criticParams = criticParams.concat(["--exclude", settings.perlcriticExclude]);
     if (settings.perlcriticInclude) criticParams = criticParams.concat(["--include", settings.perlcriticInclude]);
 
-    nLog("Now starting perlcritic with: " + criticParams.join(" "), settings);
+    nLog("Now starting perlcritic with: " + criticParams.join(" "), settings, LogLevel.Debug);
     const code = textDocument.getText();
     const diagnostics: Diagnostic[] = [];
     let output: string;
@@ -198,20 +198,20 @@ export async function perlcritic(textDocument: TextDocument, workspaceFolders: W
         }
         const criticProcess = async_execFile(settings.perlPath, criticParams, { timeout: 25000, env });
         criticProcess?.child?.stdin?.on("error", (error: any) => {
-            nLog("Perl Critic Error Caught: ", settings);
-            nLog(error, settings);
+            nLog("Perl Critic Error Caught: ", settings, LogLevel.Warning);
+            nLog(error, settings, LogLevel.Warning);
         });
         criticProcess?.child?.stdin?.write(code);
         criticProcess?.child?.stdin?.end();
         const out = await criticProcess;
         output = out.stdout;
     } catch (error: any) {
-        nLog("Perlcritic failed with unknown error", settings);
-        nLog(error, settings);
+        nLog("Perlcritic failed with unknown error", settings, LogLevel.Warning);
+        nLog(error, settings, LogLevel.Warning);
         return diagnostics;
     }
 
-    nLog("Critic output: " + output, settings);
+    nLog("Critic output: " + output, settings, LogLevel.Debug);
     output.split("~||~").forEach((violation) => {
         maybeAddCriticDiag(violation, diagnostics, settings);
     });
@@ -224,21 +224,21 @@ export async function perlimports(textDocument: TextDocument, workspaceFolders: 
     const importsPath = join(await getPerlAssetsPath(), "perlimportsWrapper.pl");
     const cliParams = [...settings.perlParams, importsPath, ...getPerlimportsProfile(workspaceFolders, settings), "--lint", "--json", "--filename", Uri.parse(textDocument.uri).fsPath];
 
-    nLog("Now starting perlimports with: " + cliParams.join(" "), settings);
+    nLog("Now starting perlimports with: " + cliParams.join(" "), settings, LogLevel.Debug);
     const code = textDocument.getText();
     const diagnostics: Diagnostic[] = [];
     let output: string;
     try {
         const process = async_execFile(settings.perlPath, cliParams, { timeout: 25000 });
         process?.child?.stdin?.on("error", (error: any) => {
-            nLog("perlimports Error Caught: " + error, settings);
+            nLog("perlimports Error Caught: " + error, settings, LogLevel.Warning);
         });
         process?.child?.stdin?.write(code);
         process?.child?.stdin?.end();
         const out = await process;
         output = out.stdout;
     } catch (error: any) {
-        nLog("Attempted to run perlimports lint: " + error.stdout, settings);
+        nLog("Attempted to run perlimports lint: " + error.stdout, settings, LogLevel.Warning);
         output = error.message;
     }
 
@@ -265,7 +265,7 @@ function getCriticProfile(workspaceFolders: WorkspaceFolder[] | null, settings: 
                 profileCmd.push("--profile");
                 profileCmd.push(profile.replaceAll("$workspaceFolder", workspaceUri));
             } else {
-                nLog("You specified $workspaceFolder in your perlcritic path, but didn't include any workspace folders. Ignoring profile.", settings);
+                nLog("You specified $workspaceFolder in your perlcritic path, but didn't include any workspace folders. Ignoring profile.", settings, LogLevel.Warning);
             }
         } else {
             profileCmd.push("--profile");
@@ -322,7 +322,7 @@ function maybeAddPerlImportsDiag(violation: string, diagnostics: Diagnostic[], s
             source: "perlnavigator",
         });
     } catch (error: any) {
-        nLog(`Could not parse JSON violation ${error}`, settings);
+        nLog(`Could not parse JSON violation ${error}`, settings, LogLevel.Warning);
     }
 }
 

@@ -26,7 +26,7 @@ import { perlcompile, perlcritic, perlimports } from "./diagnostics";
 import { cleanupTemporaryAssetPath } from "./assets";
 import { getDefinition, getAvailableMods } from "./navigation";
 import { getSymbols, getWorkspaceSymbols } from "./symbols";
-import { NavigatorSettings, PerlDocument, PerlElem, completionElem, ParseType } from "./types";
+import { NavigatorSettings, PerlDocument, PerlElem, completionElem, ParseType, LogLevel } from "./types";
 import { parseDocument } from "./parser";
 import { getHover } from "./hover";
 import { getCompletions, getCompletionDoc } from "./completion";
@@ -222,7 +222,7 @@ function expandTildePaths(paths: string, settings: NavigatorSettings): string {
     // so, Windows "%USERPROFILE%" currently is ignored (and rarely used).
     if (path.startsWith("~/")) {
         const newPath = homedir() + path.slice(1);
-        nLog("Expanding tilde path '" + path + "' to '" + newPath + "'", settings, 3);
+        nLog("Expanding tilde path '" + path + "' to '" + newPath + "'", settings, LogLevel.Debug);
         return newPath;
     } else {
         return path;
@@ -299,7 +299,7 @@ async function validatePerlDocument(textDocument: TextDocument): Promise<void> {
     const fileName = basename(Uri.parse(textDocument.uri).fsPath);
 
     const settings = await getDocumentSettings(textDocument.uri);
-    nLog("Found settings", settings);
+    nLog("Found settings", settings, LogLevel.Debug);
 
     const progressToken = navSymbols.has(textDocument.uri) ? null : await startProgress(connection, `Initializing ${fileName}`, settings);
 
@@ -312,7 +312,7 @@ async function validatePerlDocument(textDocument: TextDocument): Promise<void> {
     const pImports = perlimports(textDocument, workspaceFolders, settings); // Start perlimports
 
     let perlOut = await pCompile;
-    nLog("Compilation Time: " + (Date.now() - start) / 1000 + " seconds", settings);
+    nLog("Compilation Time: " + (Date.now() - start) / 1000 + " seconds", settings, LogLevel.Debug);
     let oldCriticDiags = documentDiags.get(textDocument.uri);
     if (!perlOut) {
         documentCompDiags.delete(textDocument.uri);
@@ -337,12 +337,12 @@ async function validatePerlDocument(textDocument: TextDocument): Promise<void> {
 
     if (settings.perlcriticEnabled) {
         newDiags = newDiags.concat(diagCritic);
-        nLog("Perl Critic Time: " + (Date.now() - start) / 1000 + " seconds", settings);
+        nLog("Perl Critic Time: " + (Date.now() - start) / 1000 + " seconds", settings, LogLevel.Debug);
     }
 
     if (settings.perlimportsLintEnabled) {
         newDiags = newDiags.concat(diagImports);
-        nLog(`perlimports Time: ${(Date.now() - start) / 1000} seconds`, settings);
+        nLog(`perlimports Time: ${(Date.now() - start) / 1000} seconds`, settings, LogLevel.Debug);
     }
 
     documentDiags.set(textDocument.uri, newDiags); // May need to clear out old ones if a user changed their settings.

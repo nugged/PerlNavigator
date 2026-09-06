@@ -1,6 +1,6 @@
 import { DefinitionParams, DocumentFormattingParams, TextEdit, DocumentRangeFormattingParams, Position, Range, WorkspaceFolder } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { PerlDocument, PerlElem, NavigatorSettings } from "./types";
+import { PerlDocument, PerlElem, NavigatorSettings, LogLevel } from "./types";
 import { async_execFile, getPerlimportsProfile, nLog } from "./utils";
 import { dirname, join } from "path";
 import Uri from "vscode-uri";
@@ -78,20 +78,20 @@ async function perlimports(doc: TextDocument, code: string, settings: NavigatorS
     const importsPath = join(await getPerlAssetsPath(), "perlimportsWrapper.pl");
     let cliParams: string[] = [importsPath].concat(getPerlimportsProfile(workspaceFolders, settings));
     cliParams = cliParams.concat(["--filename", Uri.parse(doc.uri).fsPath]);
-    nLog("Now starting perlimports with: " + cliParams.join(" "), settings);
+    nLog("Now starting perlimports with: " + cliParams.join(" "), settings, LogLevel.Debug);
 
     try {
         const process = async_execFile(settings.perlPath, settings.perlParams.concat(cliParams), { timeout: 25000, maxBuffer: 20 * 1024 * 1024 });
         process?.child?.stdin?.on("error", (error: any) => {
-            nLog("perlImports Error Caught: ", settings);
-            nLog(error, settings);
+            nLog("perlImports Error Caught: ", settings, LogLevel.Warning);
+            nLog(error, settings, LogLevel.Warning);
         });
         process?.child?.stdin?.write(code);
         process?.child?.stdin?.end();
         const out = await process;
         return out.stdout;
     } catch (error: any) {
-        nLog("Attempted to run perlimports tidy " + error.stdout, settings);
+        nLog("Attempted to run perlimports tidy " + error.stdout, settings, LogLevel.Warning);
         return;
     }
 }
@@ -101,22 +101,22 @@ async function perltidy(code: string, settings: NavigatorSettings, workspaceFold
     const tidy_path = join(await getPerlAssetsPath(), "tidyWrapper.pl");
     let tidyParams: string[] = [tidy_path].concat(getTidyProfile(workspaceFolders, settings));
 
-    nLog("Now starting perltidy with: " + tidyParams.join(" "), settings);
+    nLog("Now starting perltidy with: " + tidyParams.join(" "), settings, LogLevel.Debug);
 
     let output: string | Buffer;
     try {
         const process = async_execFile(settings.perlPath, settings.perlParams.concat(tidyParams), { timeout: 25000, maxBuffer: 20 * 1024 * 1024 });
         process?.child?.stdin?.on("error", (error: any) => {
-            nLog("PerlTidy Error Caught: ", settings);
-            nLog(error, settings);
+            nLog("PerlTidy Error Caught: ", settings, LogLevel.Warning);
+            nLog(error, settings, LogLevel.Warning);
         });
         process?.child?.stdin?.write(code);
         process?.child?.stdin?.end();
         const out = await process;
         output = out.stdout;
     } catch (error: any) {
-        nLog("Perltidy failed with unknown error", settings);
-        nLog(error, settings);
+        nLog("Perltidy failed with unknown error", settings, LogLevel.Warning);
+        nLog(error, settings, LogLevel.Warning);
         return;
     }
 
@@ -139,7 +139,7 @@ function getTidyProfile(workspaceFolders: WorkspaceFolder[] | null, settings: Na
                 profileCmd.push("--profile");
                 profileCmd.push(profile.replaceAll("$workspaceFolder", workspaceUri));
             } else {
-                nLog("You specified $workspaceFolder in your perltidy path, but didn't include any workspace folders. Ignoring profile.", settings);
+                nLog("You specified $workspaceFolder in your perltidy path, but didn't include any workspace folders. Ignoring profile.", settings, LogLevel.Warning);
             }
         } else {
             profileCmd.push("--profile");

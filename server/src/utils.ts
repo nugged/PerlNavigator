@@ -3,7 +3,7 @@ import Uri from "vscode-uri";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { TextDocument, Position } from "vscode-languageserver-textdocument";
-import { PerlDocument, PerlElem, NavigatorSettings, PerlSymbolKind, ElemSource } from "./types";
+import { PerlDocument, PerlElem, NavigatorSettings, PerlSymbolKind, ElemSource, LogLevel } from "./types";
 import * as path from "path";
 import { promises } from "fs";
 
@@ -21,7 +21,7 @@ export function getIncPaths(workspaceFolders: WorkspaceFolder[] | null, settings
                     includePaths = includePaths.concat(["-I", path.replaceAll("$workspaceFolder", incPath)]);
                 });
             } else {
-                nLog("You used $workspaceFolder in your config, but didn't add any workspace folders. Skipping " + path, settings);
+                nLog("You used $workspaceFolder in your config, but didn't add any workspace folders. Skipping " + path, settings, LogLevel.Warning);
             }
         } else {
             includePaths = includePaths.concat(["-I", path]);
@@ -245,9 +245,9 @@ export function lookupSymbol(perlDoc: PerlDocument, modMap: Map<string, string>,
     return [];
 }
 
-export function nLog(message: string, settings: NavigatorSettings, level: number = 2) {
+export function nLog(message: unknown, settings: NavigatorSettings, level: LogLevel = LogLevel.Info) {
     // TODO: Remove resource level settings and just use a global logging setting?
-    if (settings.logging && ( settings.maxLogLevel === undefined || level <= settings.maxLogLevel)) {
+    if (settings.logging && (settings.maxLogLevel === undefined || level <= settings.maxLogLevel)) {
         console.error(message);
     }
 }
@@ -262,7 +262,7 @@ export function getPerlimportsProfile(workspaceFolders: WorkspaceFolder[] | null
                 profileCmd.push("--config-file");
                 profileCmd.push(profile.replaceAll("$workspaceFolder", workspaceUri));
             } else {
-                nLog("You specified $workspaceFolder in your perlimports path, but didn't include any workspace folders. Ignoring profile.", settings);
+                nLog("You specified $workspaceFolder in your perlimports path, but didn't include any workspace folders. Ignoring profile.", settings, LogLevel.Warning);
             }
         } else {
             profileCmd.push("--config-file");

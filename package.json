@@ -217,9 +217,11 @@
 				},
 				"perlnavigator.maxLogLevel": {
 					"scope": "resource",
-					"type": "number",
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 3,
 					"default": 1,
-					"description": "Maximum log level to display in the Perl Navigator LSP log"
+					"description": "Maximum LSP log level: 0=error, 1=warning, 2=info, 3=debug"
 				},
 				"perlnavigator.trace.server": {
 					"scope": "window",

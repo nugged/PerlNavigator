@@ -1,6 +1,6 @@
 import { DefinitionParams, Location, WorkspaceFolder } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { PerlDocument, PerlElem, NavigatorSettings, ElemSource, ParseType } from "./types";
+import { PerlDocument, PerlElem, NavigatorSettings, ElemSource, ParseType, LogLevel } from "./types";
 import Uri from "vscode-uri";
 import { realpathSync, existsSync, realpath, promises } from "fs";
 import { getIncPaths, async_execFile, getSymbol, lookupSymbol, nLog, isFile } from "./utils";
@@ -131,7 +131,7 @@ export async function getAvailableMods(workspaceFolders: WorkspaceFolder[] | nul
     perlParams = perlParams.concat(getIncPaths(workspaceFolders, settings));
     const modHunterPath = join(await getPerlAssetsPath(), "lib_bs22", "ModHunter.pl");
     perlParams.push(modHunterPath);
-    nLog("Starting to look for perl modules with " + perlParams.join(" "), settings);
+    nLog("Starting to look for perl modules with " + perlParams.join(" "), settings, LogLevel.Debug);
 
     const mods: Map<string, string> = new Map();
 
@@ -140,10 +140,10 @@ export async function getAvailableMods(workspaceFolders: WorkspaceFolder[] | nul
         // This can be slow, especially if reading modules over a network or on windows.
         const out = await async_execFile(settings.perlPath, perlParams, { timeout: 90000, maxBuffer: 20 * 1024 * 1024 });
         output = out.stdout;
-        nLog("Success running mod hunter", settings);
+        nLog("Success running mod hunter", settings, LogLevel.Debug);
     } catch (error: any) {
-        nLog("ModHunter failed. You will lose autocomplete on importing modules. Not a huge deal", settings);
-        nLog(error, settings);
+        nLog("ModHunter failed. You will lose autocomplete on importing modules. Not a huge deal", settings, LogLevel.Warning);
+        nLog(error, settings, LogLevel.Warning);
         return mods;
     }
 

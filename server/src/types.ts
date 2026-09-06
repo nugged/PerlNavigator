@@ -4,6 +4,13 @@
 
 import { Diagnostic } from "vscode-languageserver/node";
 
+export enum LogLevel {
+    Error = 0,
+    Warning = 1,
+    Info = 2,
+    Debug = 3,
+}
+
 export interface NavigatorSettings {
     perlPath: string;
     perlParams: string[];
@@ -31,7 +38,7 @@ export interface NavigatorSettings {
     includePaths: string[];
     includeLib: boolean;
     logging: boolean;
-    maxLogLevel: undefined | number;
+    maxLogLevel: LogLevel | undefined;
     enableProgress: boolean;
 }
 
